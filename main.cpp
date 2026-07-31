@@ -66,8 +66,6 @@ int main() {
                 low[p] = min(low[p], low[u]);
                 if (low[u] >= dfn[p]) {
                     bccVertices.clear();
-                    vector<int> bccEdges;
-                    bccEdges.reserve(8);
                     int x;
                     ++compId;
                     do {
@@ -77,7 +75,6 @@ int main() {
                         int b = to[x];
                         bccVertices.push_back(a);
                         bccVertices.push_back(b);
-                        bccEdges.push_back(x);
                         compMark[a] = compId;
                         compMark[b] = compId;
                     } while (!(to[x ^ 1] == p && to[x] == u));
