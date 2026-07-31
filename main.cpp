@@ -26,8 +26,7 @@ int main() {
     vector<int> edgeStack;
     edgeStack.reserve(m);
     vector<char> ans(n + 1, 0);
-    vector<int> compMark(n + 1, 0), compColor(n + 1, 0);
-    int compId = 0;
+    vector<int> compColor(n + 1, 0);
     int timer = 0;
 
     for (int s = 1; s <= n; ++s) {
@@ -66,8 +65,8 @@ int main() {
                 low[p] = min(low[p], low[u]);
                 if (low[u] >= dfn[p]) {
                     bccVertices.clear();
+                    vector<pair<int, int>> bccEdges;
                     int x;
-                    ++compId;
                     do {
                         x = edgeStack.back();
                         edgeStack.pop_back();
@@ -75,27 +74,39 @@ int main() {
                         int b = to[x];
                         bccVertices.push_back(a);
                         bccVertices.push_back(b);
-                        compMark[a] = compId;
-                        compMark[b] = compId;
+                        bccEdges.emplace_back(a, b);
                     } while (!(to[x ^ 1] == p && to[x] == u));
 
                     sort(bccVertices.begin(), bccVertices.end());
                     bccVertices.erase(unique(bccVertices.begin(), bccVertices.end()), bccVertices.end());
                     if ((int)bccVertices.size() >= 3) {
+                        unordered_map<int, int> localId;
+                        localId.reserve(bccVertices.size() * 2 + 1);
+                        for (int i = 0; i < (int)bccVertices.size(); ++i) {
+                            localId[bccVertices[i]] = i;
+                        }
+                        vector<vector<int>> localGraph(bccVertices.size());
+                        for (auto [a, b] : bccEdges) {
+                            int ia = localId[a];
+                            int ib = localId[b];
+                            localGraph[ia].push_back(ib);
+                            localGraph[ib].push_back(ia);
+                        }
                         queue<int> q;
                         for (int v : bccVertices) compColor[v] = -1;
                         compColor[bccVertices[0]] = 0;
-                        q.push(bccVertices[0]);
+                        q.push(0);
                         bool bip = true;
                         while (!q.empty() && bip) {
-                            int cur = q.front(); q.pop();
-                            for (int e2 = head[cur]; e2 != -1; e2 = nxt[e2]) {
-                                int v = to[e2];
-                                if (compMark[v] != compId) continue;
-                                if (compColor[v] == -1) {
-                                    compColor[v] = compColor[cur] ^ 1;
-                                    q.push(v);
-                                } else if (compColor[v] == compColor[cur]) {
+                            int cur = q.front();
+                            q.pop();
+                            for (int nxtVertex : localGraph[cur]) {
+                                int realVertex = bccVertices[nxtVertex];
+                                int curReal = bccVertices[cur];
+                                if (compColor[realVertex] == -1) {
+                                    compColor[realVertex] = compColor[curReal] ^ 1;
+                                    q.push(nxtVertex);
+                                } else if (compColor[realVertex] == compColor[curReal]) {
                                     bip = false;
                                     break;
                                 }
